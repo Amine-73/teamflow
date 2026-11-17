@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import taskRoutes from "./routes/taskRoutes.js";
+import authRoutes from './routes/authRoutes.js'
 import { errorMiddleware } from "./middleware/errorMiddleware.js";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
@@ -27,6 +28,7 @@ const limiter=rateLimit({
 })
 app.use("/api",limiter)
 app.use("/api/tasks",taskRoutes)
+app.use("/api/auth",authRoutes)
 
 app.use(errorMiddleware)
 

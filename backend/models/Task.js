@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 
-const TaskShema=new mongoose.Schema({
+const TaskSchema=new mongoose.Schema({
+    owner:{
+        type:mongoose.Schema.Types.ObjectId,
+        required:true,
+        ref:"user"
+    },
     title:{type:String,required:true,trim:true,minlength:3,maxlength:100},
     description:{type:String,maxlength:500},
     status:{type:String,enum:["done","in-progress","to-do"],default:"to-do"},
@@ -11,5 +16,5 @@ const TaskShema=new mongoose.Schema({
     }
 )
 
-const Task=mongoose.model("Task",TaskShema);
+const Task=mongoose.model("Task",TaskSchema);
 export default Task;
