@@ -4,7 +4,11 @@ import Task from "../models/Task.js";
 
 export const getTasks=async(req,res,next)=>{
         try{
-            const allTask=await Task.find()
+            const owner=req.user.id;
+            if(!owner){
+                return res.status(401).json({success:false,message:"Unauthorized"})
+            }
+            const allTask=await Task.find({owner:owner});
             res.status(200).json({"success":true,"message":"Tasks retrieved successfully",data:allTask});
         }catch(error){
             next(error);
@@ -14,7 +18,15 @@ export const getTasks=async(req,res,next)=>{
 export const createNewTask=async (req,res,next)=>{
     try {
         const {title,description,status,priority}=req.body;
-        const newTask=new Task({title,description,status,priority});
+        const owner=req.user.id
+        if(!owner){
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized"
+            });
+        }
+        const newTask=new Task({owner,title,description,status,priority});
+        
         await newTask.save()
         res.status(201).json({"success": true,"message": "Task created successfully","data": newTask});
     } catch (error) {
@@ -28,10 +40,11 @@ export const createNewTask=async (req,res,next)=>{
 export const getTaskById=async(req,res,next)=>{
     try {
         const {id}=req.params;
+        const owner=req.user.id
         if(!mongoose.Types.ObjectId.isValid(id)){
             return res.status(400).json({success:false,message:"Invalid task ID "})
         }
-        const task=await Task.findById(id);
+        const task=await Task.findOne({_id:id,owner:owner});
         if(!task){
             return res.status(404).json({success:false,message:"Task not found"});
         }
@@ -53,6 +66,7 @@ export const updateTaskById=async (req,res,next)=>{
         const {title,description,status,priority}=req.body;
         const {id}=req.params;
         const updateData={};
+        const owner=req.user.id;
         if(title !== undefined ) updateData.title=title;
         if(description !== undefined) updateData.description=description;
         if(status !== undefined) updateData.status=status;
@@ -67,11 +81,11 @@ export const updateTaskById=async (req,res,next)=>{
         if(!mongoose.Types.ObjectId.isValid(id)){
                 return res.status(400).json({success:false,message:"Invalid task ID "})
         }
-        const updatedTasks=await Task.findByIdAndUpdate(id,updateData,{new:true,runValidators:true})
+        const updatedTasks=await Task.findOneAndUpdate({_id:id,owner},updateData,{new:true,runValidators:true})
         if(!updatedTasks){
             return res.status(404).json({success:false,message:"Task not found"})
         }
-        res.status(200).json({"success": true,"message": "Task updated successfully","data": updatedTasks})
+        return res.status(200).json({"success": true,"message": "Task updated successfully","data": updatedTasks})
     }catch(error){
         if (error.name === "ValidationError") {
         return res.status(400).json({success:false, message: error.message });
@@ -89,10 +103,11 @@ export const updateTaskById=async (req,res,next)=>{
 export const deleteTaskById=async(req,res,next)=>{
     try {
         const {id}=req.params;
+        const owner=req.user.id;
         if(!mongoose.Types.ObjectId.isValid(id)){
             return res.status(400).json({success:false,message:"Invalid ID"});
         }
-        const deleteTask=await Task.findByIdAndDelete(id);
+        const deleteTask=await Task.findOneAndDelete({_id:id,owner});
         if(!deleteTask){
             return res.status(404).json({success:false,message:"Task not found"})
         }
